@@ -7,9 +7,10 @@ import soundfile as sf
 
 
 # Load audio file
-audio, sample_rate = librosa.load("Never gonna give you up - Rick Astley.mp3", sr=None)
-
-
+audio, sample_rate = librosa.load(
+    "Never gonna give you up - Rick Astley.mp3",
+    sr=None
+)
 
 print("Audio shape:", audio.shape)
 print("Sample rate:", sample_rate)
@@ -19,18 +20,10 @@ print("Duration:", len(audio) / sample_rate, "seconds")
 
 
 
-plt.figure(figsize=(12, 4))
-plt.plot(audio)
-plt.title("Waveform")
-plt.xlabel("Samples")
-plt.ylabel("Amplitude")
-plt.show()
 
 
 
-
-
-#Framing the audio
+# Frame the audio
 frame_size = 2048
 hop_size = 512
 
@@ -47,32 +40,45 @@ print("Frames shape:", frames.shape)
 
 
 
-
-
-
-
-
-
-
-#applying the window function
+# Apply windowing function
 window = np.hanning(frame_size)
-
 windowed_frames = frames * window
 
 
 
-#Applying the actual FFT to each frame
+
+
+
+
+
+
+
+# Fourier Transform
 fft_frames = np.fft.rfft(windowed_frames)
 
 
 
 
-#Creating a spectrogram by taking the magnitude of the FFT for each frame
+
+# Create spectrogram
+magnitude = np.abs(fft_frames)
+
+magnitude_db = 20 * np.log10(np.maximum(magnitude, 1e-10))
+
+
+
+
+
+
+
+# Combined plots
 plt.figure(figsize=(12, 8))
 
 # Waveform
 plt.subplot(2, 1, 1)
+
 plt.plot(audio)
+
 plt.title("Waveform")
 plt.xlabel("Samples")
 plt.ylabel("Amplitude")
@@ -81,7 +87,7 @@ plt.ylabel("Amplitude")
 plt.subplot(2, 1, 2)
 
 plt.imshow(
-    20 * np.log10(magnitude.T + 1e-8),
+    magnitude_db.T,
     origin='lower',
     aspect='auto',
     cmap='magma'
@@ -90,24 +96,20 @@ plt.imshow(
 plt.title("Spectrogram")
 plt.xlabel("Time Frames")
 plt.ylabel("Frequency Bins")
+
 plt.colorbar(label="dB")
 
 plt.tight_layout()
 plt.show()
 
 
-
-
-
-#Inverse FFT
+# Inverse FFT
 reconstructed_frames = np.fft.irfft(fft_frames)
 
 
 
 
-
-
-#Rebuild 
+# Rebuild audio
 output = np.zeros(len(audio))
 
 for i, frame in enumerate(reconstructed_frames):
@@ -117,5 +119,7 @@ for i, frame in enumerate(reconstructed_frames):
 
 
 
-#Save reconstructed audio
+
+# Save reconstructed audio
 sf.write("reconstructed.wav", output, sample_rate)
+print("Reconstructed audio saved as reconstructed.wav")
